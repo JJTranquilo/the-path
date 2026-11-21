@@ -1,6 +1,6 @@
 # The Path
 
-A lay practitioner's day, pin potha and library of the Buddha's teachings to householders and kings. Built by Claude for C J Jayasooriya.
+A lay practitioner's day, pin potha and library of the Buddha's teachings to householders and kings.
 
 Installable web app (PWA). Open it in Chrome on Android and choose **Install app**.
 

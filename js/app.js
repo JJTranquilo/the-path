@@ -60,6 +60,7 @@ $('#p-next').onclick = () => { V.pDate = addD(V.pDate, 1); renderPotha(); };
 $('#p-new').onclick = () => openNote(newNote(V.pDate));
 $('#p-q').addEventListener('input', e => { V.q = e.target.value; renderPotha(); });
 $('#r-add').onclick = addSkill;
+$('#t-widgets').addEventListener('scroll', e => { const el = e.target; const i = Math.round(el.scrollLeft / (el.firstElementChild?.offsetWidth + 10 || 1)); [...document.querySelectorAll('#t-wdots i')].forEach((d, j) => d.classList.toggle('on', j === i)); }, { passive: true });
 $('#file').addEventListener('change', e => { const f = [...e.target.files]; e.target.value = ''; onFiles(f); });
 
 boot().catch(e => { console.error(e); toast('Something went wrong starting the app: ' + e.message, 6000); });

@@ -30,6 +30,7 @@ export async function load() {
   if (m.upoCal) S.upoCal = m.upoCal;
   dirty = new Set(m.dirty || []); driveIds = m.driveIds || {};
   setTZ(S.settings.tz || CONFIG.tz);
+  migrateVisits();
 }
 
 // ---------- day records ----------
@@ -47,6 +48,31 @@ export async function setTick(d, b, val) {
   pushCal(d, b, val);
 }
 export function logSession(d, k, minutes) { editDay(d, x => { x.sessions = x.sessions || []; x.sessions.push({ k, m: Math.round(minutes * 10) / 10, at: Date.now() }); }); }
+
+
+// ---------- temple visits ----------
+export const visitOf = d => day(d).visit || {};
+export function toggleRuwan(d) { editDay(d, x => { x.visit = { ...(x.visit || {}) }; x.visit.ruwan = !x.visit.ruwan; }); }
+export function setTemples(d, list) { editDay(d, x => { x.visit = { ...(x.visit || {}) }; x.visit.temples = list; }); }
+export function ruwanStreak(d) { // consecutive days ending at d (or the day before, if d not yet visited)
+  let s = d; if (!visitOf(s).ruwan) s = addD(s, -1); let n = 0; while (visitOf(s).ruwan) { n++; s = addD(s, -1); } return n; }
+export const visitCount = (from, to, fn) => Object.keys(S.days).filter(k => k >= from && k <= to && fn(visitOf(k))).length;
+export function recentTemples() { const seen = new Map(); for (const [k, v] of Object.entries(S.days).sort((a, b) => b[0].localeCompare(a[0]))) for (const t of (v.visit?.temples || [])) if (!seen.has(t)) seen.set(t, k); return [...seen.keys()].slice(0, 8); }
+// Notes titled "Visited <temple> …" become visits, once.
+export function migrateVisits() {
+  const done = new Set(S.settings.visitMigrated || []); let changed = false;
+  for (const n of Object.values(S.notes)) {
+    if (n.del || done.has(n.id)) continue; const m = (n.title || '').match(/^visit(?:ed)?\s+(.+?)(?:\s+[ivxlc]+)?\s*$/i); if (!m) continue;
+    const place = m[1].trim();
+    editDay(n.date, x => { x.visit = { ...(x.visit || {}) }; if (/ruwanwel/i.test(place)) x.visit.ruwan = true; else x.visit.temples = [...new Set([...(x.visit.temples || []), place])]; });
+    done.add(n.id); changed = true;
+  }
+  if (changed) saveSettings({ visitMigrated: [...done] });
+}
+// ---------- prostrations ----------
+export const prosOf = (d, k) => ((day(d).pros || {})[k]) || 0;
+export function setPros(d, k, n) { editDay(d, x => { x.pros = { ...(x.pros || {}) }; x.pros[k] = n; }); }
+export const notesForBlock = (d, k) => notesOn(d).filter(n => n.block === k);
 
 // ---------- notes ----------
 export const notesOn = d => Object.values(S.notes).filter(n => !n.del && n.date === d).sort((a, b) => a.ts - b.ts);
@@ -140,7 +166,7 @@ export async function pull() {
     if (!seen.has('settings') && S.settings.u) dirty.add('settings');
     if (!seen.has('reflections')) { driveIds.reflections = await drive.createJSON('reflections.json', r, { _about: 'Weekly reflections written by Claude. Keys are week-start dates (Monday).' }); }
     idb.put('meta', 'driveIds', driveIds); idb.put('meta', 'dirty', [...dirty]);
-    setSync('ok'); emit('all');
+    setSync('ok'); migrateVisits(); emit('all');
     // retry photos that never uploaded
     for (const [id, rec] of await idb.all('photos')) if (!rec.d) uploadPhoto(id);
     await flush();

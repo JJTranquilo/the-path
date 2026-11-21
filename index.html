@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>The Path</title>
 <meta name="description" content="A lay practitioner's day, pin potha and library of the Buddha's teachings to householders and kings.">
-<meta name="theme-color" content="#120d1f">
+<meta name="theme-color" content="#0d0a14">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Inter:wght@400;500;600;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400&family=Noto+Serif+Sinhala:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Serif+Display:ital,wght@0,300;0,400;1,300&family=Noto+Serif:ital,wght@0,400;0,500;1,400&family=Noto+Serif+Sinhala:wght@400;500&display=swap">
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
@@ -21,21 +21,22 @@
 <section class="view" id="v-today">
   <header class="hero">
     <div class="hero-top">
-      <div class="hdate"><b id="t-date">Today</b><span id="t-sub"></span></div>
-      <div class="hbtns"><button class="ib light" id="t-tools" aria-label="Tools"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></button><button class="ib light" id="t-set" aria-label="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></div>
+      <div class="dnav"><button class="ib light sm" id="t-prev" aria-label="Previous day"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><button class="hdate" id="t-home" aria-label="Back to today"><b id="t-date">Today</b><span id="t-sub"></span></button><button class="ib light sm" id="t-next" aria-label="Next day"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></div>
+      <div class="hbtns"><button class="ib light" id="t-tools" aria-label="Tools"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.5 1.6M9.5 3h5"/></svg></button><button class="ib light" id="t-set" aria-label="Settings"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button></div>
     </div>
-    <div class="hero-mid"><span id="t-badge"></span><h1>The Path</h1></div>
-    <div class="dnav"><button id="t-prev" aria-label="Previous day">‹</button><button id="t-home" aria-label="Back to today">Today</button><button id="t-next" aria-label="Next day">›</button></div>
+    <div class="hero-mid"><p class="greet" id="t-greet"></p><div class="badges" id="t-badge"></div></div>
     <div class="now" id="t-now"></div>
   </header>
   <div id="t-banners"></div>
+  <div class="widgets" id="t-widgets"></div>
+  <div class="wdots" id="t-wdots"></div>
   <div id="t-upo"></div>
-  <section class="card hold" id="t-hold"></section>
-  <div id="t-refl"></div>
+  <section id="t-potha"></section>
   <div class="sec"><h2>The day</h2><span id="t-count"></span></div>
   <div class="prog" id="t-prog"><i></i></div>
+  <div class="visits" id="t-visits"></div>
   <div class="list" id="t-list"></div>
-  <p class="pad mini foot">Tick a practice and it greys out here and in your Calendar. Times are a guide, except where marked with a gold dot.</p>
+  <p class="pad mini foot">Times are a guide, except those marked with a gold dot. Marking a practice done here also marks it in your calendar.</p>
 </section>
 
 <section class="view" id="v-calendar">
@@ -56,7 +57,7 @@
 </section>
 
 <section class="view" id="v-rubric">
-  <header class="top"><div><h1>The Rubric</h1><p class="si">The walls and moat, built before the enemy comes</p></div><button class="btn sm ghost" id="r-add">Add a skill</button></header>
+  <header class="top"><div><h1>The Rubric</h1><p class="si">A lasting checklist for body, speech and mind</p></div><button class="btn sm ghost" id="r-add">Add a skill</button></header>
   <div id="r-body"></div>
 </section>
 

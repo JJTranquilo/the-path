@@ -208,7 +208,7 @@ Families that stay wealthy do the opposite.""",
   "The same law governs the mind: concentration comes from attending carefully to the meditation sign morning, noon and evening."],
  notes=[
   ("an3.19:1.3","sakkaccaṁ kammantaṁ adhiṭṭhāti","\"Carefully focus on their work\": *adhiṭṭhāti* has the sense of taking charge of, superintending. *Sakkaccaṃ* is \"thoroughly, with respect\". The image is an owner who is present in his business three times a day.")],
- living="""**Presence beats intensity.** The shopkeeper fails not by doing the wrong thing but by being absent from the work at some part of the day. Three check-ins a day is the Buddha's minimum standard of attention, for a business and for a mind. (Your own three daily check-ins in The Path follow the same rhythm.)""",
+ living="""**Presence beats intensity.** The shopkeeper fails not by doing the wrong thing but by being absent from the work at some part of the day. Three check-ins a day is the Buddha's minimum standard of attention, for a business and for a mind. The three daily check-ins in this app follow the same rhythm.""",
  topics=['business','diligence'],
  related=['an3.20','an8.54']
 ),
@@ -319,7 +319,7 @@ The Buddha then maps each stage onto the moral life. The person without faith, c
   ("an6.45:22.1","ubhayattha kaṭaggāho","\"Holds a winning hand on both counts\": *kaṭaggāha* is the winning throw at dice. A fine rendering.")],
  living="""**Two debts, one structure.** The sutta's genius is the parallel. Financial debt begins in poverty, compounds through interest, ends in pursuit and confinement. Moral debt begins in poverty of the five qualities (faith, conscience, moral fear, energy, wisdom), compounds through concealment, ends in remorse and a bad rebirth.
 
-**Concealment is the interest.** This is the single most practical line. The original wrong is the principal. Every act of hiding it ("May no one know", *mā maṃ jaññū*) adds interest: in intention, in thought, in speech, in action. The fastest way to stop the compounding is disclosure. That is why MN 61 tells you to *reveal* a wrong deed or word to a wise companion, and why your evening check-in does the same.
+**Concealment is the interest.** This is the single most practical line. The original wrong is the principal. Every act of hiding it ("May no one know", *mā maṃ jaññū*) adds interest: in intention, in thought, in speech, in action. The fastest way to stop the compounding is disclosure. That is why MN 61 tells us to *reveal* a wrong deed or word to a wise companion, and why an evening review of the day does the same.
 
 **On financial debt, read this with AN 3.20 and AN 4.62.** The sutta describes the poor borrowing to live (*daliddo assako anāḷhiko*) and the chain of suffering that follows. It is not a ban on credit: AN 3.20 praises a merchant who builds wealth on capital lent him. The wisdom is to know which kind of debt you are taking, and what it will cost your mind as well as your purse.
 
@@ -397,7 +397,7 @@ The Buddha explains: wealth an unworthy person does not use goes to rulers, thie
  notes=[
   ("mn135:4.1","kammassakā … kammappaṭisaraṇā","\"Owners of their deeds, heirs of their deeds, born of their deeds, related to their deeds, and have deeds as their refuge.\" The same formula appears in AN 5.57, the fifth daily reflection. Sujato's rendering is faithful."),
   ("mn135:3.5","appesakkha / mahesakkha","\"Insignificant / illustrious\": the sense is low or high influence and standing. Accurate.")],
- living="""**This is the canon's direct answer to "how do I become wealthy?"** Not across a lifetime. Across lives. The cause of wealth, the Buddha says, is *giving*. The ten items listed are the ten bases of giving you already have on your Rubric.
+ living="""**This is the canon's direct answer to "how do I become wealthy?"** Not across a lifetime. Across lives. The cause of wealth, the Buddha says, is *giving*. The ten items listed are the ten bases of giving listed in the Rubric.
 
 **And the wider list repays study.** Influence comes from not envying others' gains and honours. Wisdom comes from *asking*: "What is wholesome, what is unwholesome? What should I do for my long-term welfare?" A person who wants every good thing in the list (long life, health, beauty, influence, wealth, standing, wisdom) has a seven-line practice manual here.""",
  topics=['kamma','wealth','giving','next-life'],
@@ -458,7 +458,7 @@ Whoever has them, woman or man, "is called not poor; their life is not in vain".
   ("snp2.14:30.2","payojaye dhammikaṁ so vaṇijjaṁ","\"Should engage in a principled business\": righteous trade is placed in the same verse as supporting one's parents, as one of the two crowning duties of the lay disciple.")],
  living="""**The lay path in one sutta.** Precepts, uposatha, giving, parents, honest business. Notice that **righteous trade is a religious duty here**. It is not a neutral activity outside the practice. It is named in the same breath as caring for one's parents.
 
-This sutta is also the canonical source for the uposatha schedule your Today screen follows.""",
+This sutta is also the canonical source for the uposatha days the app follows.""",
  topics=['lay-practice','uposatha','livelihood','parents'],
  related=['an3.70','an5.177','an2.33']
 ),

@@ -71,7 +71,7 @@ A virtuous giver offering rightly earned wealth with a confident heart, trusting
   "**Offerings to the Sangha** as a body are greater than offerings to any individual, even a Buddha.",
   "A gift is purified by the giver when the giver is virtuous, the gift righteously obtained, the heart confident, and the giver trusts that deeds bear fruit."],
  notes=[("mn142:5.1","pāṭipuggalikā dakkhiṇā","\"Personal offerings\": given to a named individual, as opposed to the Sangha as a whole (*saṅghika*). Sujato's distinction is accurate.")],
- living="""**This is why the Sangha is the field of merit.** Your Ruwanwelisaya offering and every dāna given to the Sangha as a body (rather than to a favoured monk) falls into the category the Buddha says is incalculable.
+ living="""**This is why the Sangha is the field of merit.** Every dāna given to the Sangha as a body (rather than to a favoured monk) falls into the category the Buddha says is incalculable.
 
 **The giver's purification is in your hands.** Of the four ways a gift can be purified, the giver's side requires four things: virtue, clean wealth, a confident mind, and faith in kamma. You cannot control the recipient's virtue. You can always control these.""",
  topics=['giving','sangha'], related=['an4.60','an7.52']),
@@ -83,7 +83,7 @@ A virtuous giver offering rightly earned wealth with a confident heart, trusting
  brief="""A noble disciple practises the way proper to a householder, which brings a good name and leads to heaven, by supporting the Sangha with robes, almsfood, lodgings and medicines.""",
  teaching=["The four requisites (cīvara, piṇḍapāta, senāsana, gilānapaccaya) are the householder's proper offering to the Sangha."],
  notes=[("an4.60:2.1","gihisāmīcipaṭipadaṁ","\"Practicing appropriately for a layperson.\" *Sāmīci* means fitting or proper. Accurate.")],
- living="""**The four requisites are a simple framework for dāna.** Clothing, food, shelter and medicine. A householder who supports all four over a year is doing the full practice. *Senāsana*, lodging, is the category of your maluwa offering.""",
+ living="""**The four requisites are a simple framework for dāna.** Clothing, food, shelter and medicine. A householder who supports all four over a year is doing the full practice. *Senāsana*, lodging, includes building or restoring monasteries, halls and shrine terraces.""",
  topics=['giving','sangha'], related=['mn142','an4.61']),
 }
 
@@ -138,7 +138,7 @@ CONDUCT = {
 - three of mind: covetousness, ill will and wrong view, or their opposites""",
  teaching=["The ten wholesome courses of action (dasa kusala kammapatha) are the moral foundation under every other teaching in this book."],
  notes=[("mn41:10.2","abhijjhālu","\"Covetous\": the sutta defines it as coveting another's wealth: \"Oh, if only their belongings were mine!\" The first fault of mind is about money.")],
- living="""**The ten are your three doors.** This sutta is the canonical source of the body, speech and mind framework on your Rubric. Note the first mental fault: wanting what belongs to another. Covetousness about wealth is the root error the money suttas guard against.""",
+ living="""**The ten are the three doors.** This sutta is the canonical source of the body, speech and mind framework in the Rubric. Note the first mental fault: wanting what belongs to another. Covetousness about wealth is the root error the money suttas guard against.""",
  topics=['ethics','kamma'], related=['an6.45','an5.177']),
 
 'an3.70': dict(
@@ -156,7 +156,7 @@ The benefit of one such uposatha exceeds sovereignty over the sixteen great coun
   "Each precept is undertaken by modelling the arahants: *yāvajīvaṃ arahanto … ahampajja imañca rattiṃ imañca divasaṃ…*",
   "Rule over the sixteen great countries is \"not worth a sixteenth part\" of the noble uposatha."],
  notes=[("an3.70:26.2","ahampajja imañca rattiṁ imañca divasaṁ","\"I, too, for this day and night…\" The canonical source for observing uposatha from dawn to dawn, as The Path does.")],
- living="""**This is the sutta behind your uposatha mode.** Read it the evening before each observance. The five recollections can replace the usual evening sitting on uposatha days.""",
+ living="""**This is the sutta behind the app's uposatha days.** Read it the evening before each observance. The five recollections can replace the usual evening sitting on uposatha days.""",
  topics=['uposatha','precepts'], related=['snp2.14']),
 }
 
@@ -277,7 +277,7 @@ Caste is shown to be a social arrangement, not divine. The conclusion: *\"Dhamma
  notes=[("dn27:21.1","mahājanasammato","Sujato: \"popularly elected\". The Pali is \"agreed upon by the great multitude\". \"Elected\" carries modern ballot-box connotations. The traditional English is \"the Great Elect\" or \"the Great Appointee\". The Buddha Jayanti Sinhala uses *sammata kara gannemu*, \"let us agree upon one\". The Sinhala chronicles trace the island's royal lines back to Mahāsammata.")],
  living="""**Kingship as a contract.** The first ruler was chosen for capacity and paid to keep order. His title meant one who *delights* the people through Dhamma. Authority is legitimate when it does that job and loses its meaning when it doesn't.
 
-**For a family that traces its descent to kings,** the sutta's teaching is pointed. The lineage begins with an agreement to rule righteously, and \"conduct, not birth\" is its final word.""",
+**For anyone proud of lineage,** the sutta's teaching is pointed. Kingship begins with an agreement to rule righteously, and \"conduct, not birth\" is its final word.""",
  topics=['statecraft','lineage','origins'], related=['dn26','an5.133']),
 
 'an4.70': dict(
@@ -349,7 +349,7 @@ The verse: when cattle cross a river, if the lead bull goes crooked, all go croo
 10. non-opposition (avirodhana)""",
  teaching=["\"Standing in these ten, I do not fear the next world. Seeing these wholesome qualities in myself, great joy and gladness arise in me.\""],
  notes=[("ja534:5","tapaṁ · avirodhanaṁ","These verses have no Sujato translation; the English here is mine, checked against the Buddha Jayanti Sinhala. That Sinhala glosses *tapa* as keeping the uposatha precepts (උපෝසථශීලසමාදාන), *akkodha* as non-anger rooted in mettā, *avihiṃsā* as non-violence rooted in karuṇā, *khanti* as forbearance, and *avirodhana* as being in accord (එකඟබව), not opposing what is right.")],
- living="""**The Sri Lankan ideal of the ruler.** Chronicles, inscriptions and sermons hold kings to these ten. They are equally a standard for anyone who leads, whether a household, a company or a family with a long name.""",
+ living="""**The Sri Lankan ideal of the ruler.** Chronicles, inscriptions and sermons hold kings to these ten. They are equally a standard for anyone who leads, whether a household, a company or a community.""",
  topics=['statecraft','leadership','virtue'], related=['an5.133','dn26']),
 }
 

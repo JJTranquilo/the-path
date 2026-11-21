@@ -1,8 +1,8 @@
 // Meditation tools: temple-bell timer, recitation counter, Ruwanwelisaya compass.
 import { $, esc, pad2, zNow } from './core.js';
-import { S, isDone, setTick, logSession, saveSettings } from './store.js';
+import { S, isDone, setTick, logSession, saveSettings, prosOf, setPros, blocksFor, editDay } from './store.js';
 import { sheet, closeSheet, toast, buzz, wake } from './ui.js';
-import { STUPA, PLACES } from './data.js';
+import { STUPA, PLACES, WSTEPS, isWorship } from './data.js';
 
 // ---------- bell: inharmonic partials like a bronze bowl, with a soft strike ----------
 let actx = null, keep = null;
@@ -124,7 +124,8 @@ export const bearing = (la1, lo1, la2, lo2) => { const y = Math.sin(rad(lo2 - lo
 export const dist = (la1, lo1, la2, lo2) => { const a = Math.sin(rad(la2 - la1) / 2) ** 2 + Math.cos(rad(la1)) * Math.cos(rad(la2)) * Math.sin(rad(lo2 - lo1) / 2) ** 2; return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); };
 const card16 = b => ['north', 'north-northeast', 'northeast', 'east-northeast', 'east', 'east-southeast', 'southeast', 'south-southeast', 'south', 'south-southwest', 'southwest', 'west-southwest', 'west', 'west-northwest', 'northwest', 'north-northwest'][Math.round(b / 22.5) % 16];
 export function openCompass(b, date) {
-  const d = date || zNow().date; let loc = S.settings.loc || null; let heading = null, sx = 0, sy = 0, aligned = false, pros = 0, listening = false, gotAbs = false;
+  const d = date || zNow().date; let loc = S.settings.loc || null; let heading = null, sx = 0, sy = 0, aligned = false, pros = b ? prosOf(d, b.k) : 0, listening = false, gotAbs = false;
+  const wb = blocksFor(d).filter(isWorship); const dayTotal = () => wb.reduce((a, x) => a + prosOf(d, x.k), 0);
   const target = () => loc ? bearing(loc.lat, loc.lon, STUPA.lat, STUPA.lon) : null;
   const ticks = [...Array(72)].map((_, i) => { const a = rad(i * 5), r1 = i % 18 === 0 ? 74 : i % 2 === 0 ? 82 : 86; return `<line x1="${(100 + Math.sin(a) * r1).toFixed(1)}" y1="${(100 - Math.cos(a) * r1).toFixed(1)}" x2="${(100 + Math.sin(a) * 92).toFixed(1)}" y2="${(100 - Math.cos(a) * 92).toFixed(1)}" class="${i % 18 === 0 ? 'tk1' : 'tk'}"/>`; }).join('');
   const stupaIcon = `<g class="stupa"><path d="M-7 4 Q0 -10 7 4 Z"/><rect x="-2" y="-14" width="4" height="5" rx="1"/><path d="M0 -22 L1.6 -14 L-1.6 -14 Z"/><rect x="-9" y="4" width="18" height="3" rx="1"/></g>`;
@@ -177,7 +178,8 @@ export function openCompass(b, date) {
       <div class="dial" id="cp-dial"></div>
       <p class="lead center" id="cp-txt"></p><p class="mini center" id="cp-sub"></p>
       <div class="row-actions center"><button class="btn" id="cp-live">Start live compass</button><button class="btn ghost" id="cp-loc">Use my location</button></div>
-      <button class="counter small" id="cp-pro" aria-label="Count a prostration"><span><b id="cp-n">0</b><small>of 7 prostrations</small></span></button>
+      <button class="counter small" id="cp-pro" aria-label="Count a prostration"><span><b id="cp-n">${pros}</b><small>of 7 prostrations</small></span></button>
+      <p class="mini center" id="cp-day">${wb.length ? `Today ${dayTotal()} of ${wb.length * 7}` : ''}</p>
       <details class="opts"><summary>Choose a place instead</summary>
         <div class="chips">${PLACES.map(p => `<button class="chip" data-pl="${esc(p[0])}">${esc(p[0])}</button>`).join('')}</div>
         <p class="mini">For an accurate live compass, wave the phone in a figure of eight once to calibrate, and keep it away from metal and magnets.</p>
@@ -187,5 +189,13 @@ export function openCompass(b, date) {
   $('#cp-live').onclick = () => { startOri(); $('#cp-live').hidden = true; };
   $('#cp-loc').onclick = locate;
   document.querySelectorAll('[data-pl]').forEach(x => x.onclick = () => { const p = PLACES.find(q => q[0] === x.dataset.pl); loc = { lat: p[1], lon: p[2], name: p[0] }; saveSettings({ loc }); draw(); });
-  $('#cp-pro').onclick = () => { if (pros >= 7) return; ctx(); pros++; $('#cp-n').textContent = pros; buzz(30); if (pros === 7) { bell(0, 0.5); buzz([200, 100, 400]); if (b && !isDone(d, b)) setTick(d, b, true); toast('Seven prostrations. Sādhu.'); } };
+  $('#cp-pro').onclick = () => {
+    if (pros >= 7) return; ctx(); pros++; $('#cp-n').textContent = pros; buzz(30);
+    if (b) { setPros(d, b.k, pros); const dt = $('#cp-day'); if (dt) dt.textContent = `Today ${dayTotal()} of ${wb.length * 7}`; }
+    if (pros === 7) {
+      bell(0, 0.5); buzz([200, 100, 400]); toast('Seven prostrations. Sādhu.');
+      if (b && b.steps) { const vi = WSTEPS.indexOf('Buddha Vandana'); let all = false; editDay(d, x => { x.steps = x.steps || {}; const a = [...(x.steps[b.k] || [])]; a[vi] = true; x.steps[b.k] = a; all = a.filter(Boolean).length === WSTEPS.length; }); if (all) setTick(d, b, true); }
+      else if (b && !isDone(d, b)) setTick(d, b, true);
+    }
+  };
 }

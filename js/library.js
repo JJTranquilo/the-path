@@ -5,6 +5,7 @@ import { sheet, toast } from './ui.js';
 
 let IDX = null; const TXT = {};
 const loadIdx = async () => IDX || (IDX = await (await fetch('library/index.json')).json());
+export const libraryIndex = loadIdx;
 const loadTxt = async id => TXT[id] || (TXT[id] = await (await fetch(`library/t/${id}.json`)).json());
 const MODES = [['en', 'English'], ['par', 'English + Pali'], ['pli', 'Pali'], ['bjtp', 'BJT පාළි'], ['bjts', 'BJT සිංහල'], ['apz', 'නූතන සිංහල']];
 const R = { mode: localStorage.getItem('tp.mode') || 'en', tab: 'study', size: +(localStorage.getItem('tp.size') || 1) };
@@ -28,7 +29,7 @@ function home(el) {
   const bm = S.settings.bookmarks || []; const last = JSON.parse(localStorage.getItem('tp.last') || 'null');
   const E = IDX.essays;
   el.innerHTML = `
-  <header class="top lib-top"><div><h1>Library</h1><p class="si">ගිහි විනය · The householder's path</p></div></header>
+  <header class="lib-hero"><h1>Library</h1><p class="si">ගිහි විනය · The Buddha's teaching for householders and rulers</p></header>
   <div class="pad"><input type="search" id="l-q" class="search" placeholder="Search the library: debt, taxes, marriage, kings…"></div>
   <div id="l-res"></div>
   <div id="l-main">
