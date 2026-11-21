@@ -1,0 +1,27 @@
+# Keeps the Buddha Jayanti and pitaka.lk texts in sync with tipitaka.lk, as its CC BY-ND licence requires,
+# and refreshes Sujato's English from SuttaCentral. Runs monthly and on demand.
+name: Sync texts
+on:
+  schedule: [{ cron: '17 3 1 * *' }]
+  workflow_dispatch:
+permissions: { contents: write }
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - name: Fetch tipitaka.lk text files
+        run: |
+          git clone --depth 1 --filter=blob:none --sparse https://github.com/pathnirvana/tipitaka.lk /tmp/tp
+          cd /tmp/tp && git sparse-checkout set public/static/text public/static/text-apz public/static/data
+      - name: Fetch SuttaCentral segments
+        run: python tools/fetch_sc.py /tmp/sc
+      - name: Build library
+        run: python tools/build_library.py /tmp/sc /tmp/tp/public/static tools/content library
+      - name: Commit if changed
+        run: |
+          git config user.name "the-path-bot"; git config user.email "actions@users.noreply.github.com"
+          git add library
+          git diff --cached --quiet || (git commit -m "Sync texts from tipitaka.lk and SuttaCentral" && git push)

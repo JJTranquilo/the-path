@@ -1,0 +1,23 @@
+{
+  "name": "The Path",
+  "short_name": "The Path",
+  "description": "A lay practitioner's day, pin potha and library of the Buddha's teachings to householders and kings.",
+  "id": "./",
+  "start_url": "./#today",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#110c1d",
+  "theme_color": "#110c1d",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Timer", "url": "./?tool=timer#today", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Face Ruwanwelisaya", "url": "./?tool=compass#today", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "New note", "url": "./?tool=note#potha", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Library", "url": "./#library", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}
