@@ -1,6 +1,6 @@
 // Today, Calendar, Pin Potha, Rubric and Settings views.
 import { $, $$, esc, pad2, zNow, addD, nice, short, mins, DOW, MON, weekStart, dowOf, fmtStamp, fmtTime, deviceTZ, getTZ, uid } from './core.js';
-import { S, blocksFor, blockByKey, day, editDay, isDone, setTick, notesOn, allNotes, saveNote, deleteNote, newNote, addPhoto, photoURL, saveSettings, saveCards, schedule, upo, MOON, connect, disconnect, pull, flush, loadCal, importSchedule, clientId, calId, visitOf, toggleRuwan, setTemples, ruwanStreak, visitCount, recentTemples, prosOf, notesForBlock } from './store.js';
+import { S, blocksFor, blockByKey, day, editDay, isDone, setTick, notesOn, allNotes, saveNote, deleteNote, newNote, addPhoto, photoURL, saveSettings, saveCards, schedule, upo, MOON, connect, disconnect, pull, flush, loadCal, importSchedule, clientId, calId, visitOf, toggleRuwan, setTemples, ruwanStreak, visitCount, daysSince, recentTemples, prosOf, notesForBlock } from './store.js';
 import { GCOL, GNAME, WSTEPS, FAMILIES, familyOf, displayName, silSet, DHUT, RUBRIC, DEFAULT_SCHEDULE, guidance, isWorship } from './data.js';
 import { libraryIndex } from './library.js';
 import { sheet, closeSheet, toast, confirmBox, buzz, viewer } from './ui.js';
@@ -40,7 +40,7 @@ export function renderToday() {
     : `<div class="nc-l"><small>${open} flexible practice${open === 1 ? '' : 's'} open</small><b>${lbl}</b></div><div class="nc-r"><span class="t">✓</span></div>`;
   // banners
   let bn = '';
-  if (S.sync.state === 'auth' && clientId()) bn += `<div class="banner"><span>Google is disconnected. Ticks are saved on this device until you reconnect.</span><button class="btn sm" data-act="connect">Connect</button></div>`;
+  if (S.sync.state === 'auth' && clientId()) bn += `<div class="banner"><span>${S.settings.consented ? 'Google sign-in needs a moment. Everything is saved on this device.' : 'Connect Google to keep your practice in your own Drive and Calendar.'}</span><button class="btn sm" data-act="connect">${S.settings.consented ? 'Resume' : 'Connect'}</button></div>`;
   else if (!clientId()) bn += `<div class="banner soft"><span>Practising on this device only. Connect Google in Settings to sync with Calendar and Drive.</span><button class="btn sm ghost" data-act="settings">Settings</button></div>`;
   if (S.calState === 'err') bn += `<div class="banner err"><span>${esc(S.calMsg)}</span><button class="btn sm" data-act="calretry">Retry</button></div>`;
   if (tom && isToday) bn += `<div class="banner gold"><span>${MOON[tom.kind] || '◌'} Uposatha tomorrow. If keeping ten precepts, settle any payments this evening.</span></div>`;
@@ -98,6 +98,31 @@ const DOS = [
   ['Speech', ['One breath before every reply', 'Only what is true, helpful and timely', 'Gentle words that heal, never divide']],
   ['Mind', ['Notice which way each thought leans (MN 19)', 'Replace, don\'t wrestle, an unwholesome thought', 'I am the heir to what I do next (AN 5.57)']],
 ];
+// The full card: the ten wholesome courses of action (MN 41), door by door, with everyday practice.
+const DOS_FULL = [
+  ['Body', 'කාය', [
+    ['Protect life', 'pāṇātipātā veramaṇī', 'Put down the stick and the knife; live with kindness and compassion for every living being.'],
+    ['Take only what is given', 'adinnādānā veramaṇī', 'Nothing taken by stealth, by trickery, or by the small dishonesties of work and trade.'],
+    ['Keep faith in relationships', 'kāmesu micchācārā veramaṇī', 'Honour every person\'s bonds of family and marriage, and your own.'],
+  ], ['Eat as nourishment, not as entertainment (MN 2)', 'Guard the senses: see, but don\'t grasp at the features (MN 27)', 'Walk, stand, sit and lie down knowing it (MN 10)', 'Keep clear of the six drains on wealth (DN 31)']],
+  ['Speech', 'වචී', [
+    ['Speak the truth', 'musāvādā veramaṇī', 'Never a deliberate lie, for your own sake, another\'s, or for any gain.'],
+    ['Speak to unite', 'pisuṇāya vācāya veramaṇī', 'Don\'t carry tales from here to there; love harmony and say what brings people together.'],
+    ['Speak gently', 'pharusāya vācāya veramaṇī', 'Words that are mellow, pleasing to the ear, going to the heart, polite.'],
+    ['Speak what matters', 'samphappalāpā veramaṇī', 'At the right time, true, meaningful, in line with the Dhamma; words worth treasuring.'],
+  ], ['Before speaking: is it true, is it helpful, is it the right time? (MN 58)', 'Say it with a mind of love, not inner hate (AN 5.198)', 'Praise what deserves praise, at the right time (AN 4.100)']],
+  ['Mind', 'මනෝ', [
+    ['Free of covetousness', 'anabhijjhā', 'Not coveting the wealth and belongings of others: "Oh, if only their things were mine!"'],
+    ['Free of ill will', 'abyāpāda', '"May these beings live free of enmity and trouble, and look after themselves with ease."'],
+    ['Right view', 'sammādiṭṭhi', 'There is meaning in giving and offering; good and bad deeds bear fruit; there are those who have realised this world and the next.'],
+  ], ['Notice which way each thought leans, and let the unwholesome one go (MN 19)', 'Replace, don\'t wrestle: put a good thought in its place (MN 20)', 'Reflect daily: I am the owner and heir of my deeds (AN 5.57)', 'Recollect your own generosity and virtue, and be glad (AN 6.10)']],
+];
+export function openDos() {
+  const b = sheet('Practice of virtue', `<div class="prose dosfull"><p class="mini">The ten wholesome courses of action, as the Buddha taught them to the householders of Sālā (MN 41), with a few everyday practices for each door.</p>
+  ${DOS_FULL.map(([h, si, ten, daily]) => `<h3>${h} <span class="si">${si}</span></h3><ul class="ten">${ten.map(([t, p, x]) => `<li><b>${esc(t)}</b> <span class="pali">${esc(p)}</span><span>${esc(x)}</span></li>`).join('')}</ul><ul class="daily">${daily.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`).join('')}
+  <p class="row-actions"><a class="btn sm" href="#library/mn41">Read MN 41</a><a class="btn sm ghost" href="#rubric">Open the Rubric</a></p></div>`);
+  b.querySelectorAll('a').forEach(a => a.addEventListener('click', () => closeSheet()));
+}
 let libTimer = null;
 function renderWidgets(s) {
   const el = $('#t-widgets'); const v = visitOf(s), st = ruwanStreak(s);
@@ -108,11 +133,11 @@ function renderWidgets(s) {
   const C = 2 * Math.PI * 26;
   el.innerHTML = `
   <article class="w w-lib" id="w-lib"><small>From the Library</small><div class="lib-slot"><p class="q">Opening the Library…</p></div><div class="w-foot"><span class="ldots"></span><a class="link" href="#library">Library →</a></div></article>
-  <article class="w w-dos"><small>Practice of virtue · today</small><div class="dos">${DOS.map(([h, l]) => `<div><b>${h}</b><ul>${l.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>`).join('')}</div></article>
-  <article class="w w-visit"><small>Pilgrimage</small><div class="w-big">${ICON.crown}<div><b>${st ? `${st} day${st > 1 ? 's' : ''} in a row` : 'Ruwanwelisaya'}</b><span>${monthR} visit${monthR === 1 ? '' : 's'} this month${monthT ? ` · ${monthT} other temple day${monthT === 1 ? '' : 's'}` : ''}</span></div></div><div class="w-foot"><button class="chip ${v.ruwan ? 'on' : ''}" data-visit="ruwan">${v.ruwan ? 'Visited today ✓' : 'I visited today'}</button><button class="chip" data-visit="other">Another temple</button></div></article>
+  <article class="w w-dos" data-wopen="dos" role="button" tabindex="0" aria-label="Open the practice of virtue"><small>Practice of virtue · today <i class="open">Open ↗</i></small><div class="dos">${DOS.map(([h, l]) => `<div><b>${h}</b><ul>${l.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>`).join('')}</div></article>
+  <article class="w w-visit"><small>Pilgrimage</small><div class="w-big">${ICON.crown}<div><b>${st ? `${st} day${st > 1 ? 's' : ''} in a row` : 'Ruwanwelisaya'}</b><span>${monthR} visit${monthR === 1 ? '' : 's'} this month${monthT ? ` · ${monthT} other temple day${monthT === 1 ? '' : 's'}` : ''}</span>${(() => { if (v.ruwan) return ''; const dr = daysSince(s, x => x.ruwan), dt = daysSince(s, x => x.ruwan || (x.temples || []).length); const f = n => n === 0 ? 'today' : n === 1 ? 'yesterday' : `${n} days ago`; return dr != null ? `<span class="since">Last visit ${f(dr)}${dt != null && dt < dr ? ` · a temple ${f(dt)}` : ''}</span>` : dt != null ? `<span class="since">Last temple visit ${f(dt)}</span>` : ''; })()}</div></div><div class="w-foot"><button class="chip ${v.ruwan ? 'on' : ''}" data-visit="ruwan">${v.ruwan ? 'Visited today ✓' : 'I visited today'}</button><button class="chip" data-visit="other">Another temple</button></div></article>
   ${goal ? `<article class="w w-pros"><small>Vandana</small><div class="w-big"><svg viewBox="0 0 60 60" class="mring"><circle cx="30" cy="30" r="26" class="trk"/><circle cx="30" cy="30" r="26" class="arc" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - pt / goal)).toFixed(1)}" transform="rotate(-90 30 30)"/><text x="30" y="35">${pt}</text></svg><div><b>${pt} of ${goal} prostrations</b><span>Seven at each worship, facing Ruwanwelisaya</span></div></div><div class="w-foot"><button class="chip" data-compass="${(wb.find(b => prosOf(s, b.k) < 7) || wb[0]).k}">Face Ruwanwelisaya</button></div></article>` : ''}
   ${nu ? `<article class="w w-upo"><small>Uposatha</small><div class="w-big"><span class="moonbig">${MOON[nu.kind] || '◌'}</span><div><b>${nu.i === 0 ? 'Today' : nu.i === 1 ? 'Tomorrow' : `In ${nu.i} days`}</b><span>${esc(nu.label)} · ${nice(nu.d)}</span></div></div><div class="w-foot"><a class="link" href="#library/an3.70">The noble uposatha →</a></div></article>` : ''}
-  <article class="w w-week"><small>This week</small><div class="bars">${bars.map(x => `<div class="${x.t ? 't' : ''}"><i style="--f:${x.f}"></i><span>${DOW[dowOf(x.d)].slice(0, 1)}</span></div>`).join('')}</div><div class="w-foot"><a class="link" href="#calendar">Calendar →</a></div></article>`;
+  <article class="w w-week" data-wopen="week" role="button" tabindex="0"><small>This week</small><div class="bars">${bars.map(x => `<div class="${x.t ? 't' : ''}"><i style="--f:${x.f}"></i><span>${DOW[dowOf(x.d)].slice(0, 1)}</span></div>`).join('')}</div><div class="w-foot"><a class="link" href="#calendar">Calendar →</a></div></article>`;
   $('#t-wdots').innerHTML = [...el.children].map((_, i) => `<i class="${i === 0 ? 'on' : ''}"></i>`).join('');
   libTicker(s);
 }
@@ -147,6 +172,7 @@ function otherTemple(s) {
 }
 export function todayClick(e) {
   const t = e.target, s = V.date;
+  const wo = t.closest('[data-wopen]'); if (wo && !t.closest('a,button')) { if (wo.dataset.wopen === 'dos') openDos(); else location.hash = 'calendar'; return true; }
   const vs = t.closest('[data-visit]'); if (vs) { if (vs.dataset.visit === 'ruwan') { toggleRuwan(s); buzz(20); if (visitOf(s).ruwan) toast(`Ruwanwelisaya · ${ruwanStreak(s)} day${ruwanStreak(s) > 1 ? 's' : ''} in a row. Sādhu.`); } else otherTemple(s); return true; }
   const ut = t.closest('[data-untemple]'); if (ut) { setTemples(s, (visitOf(s).temples || []).filter(x => x !== ut.dataset.untemple)); return true; }
   const dn = t.closest('[data-daynote]'); if (dn) { openNote(newNote(s)); return true; }
@@ -179,11 +205,23 @@ export function renderCal() {
   let h = '';
   if (m === 'week') {
     const ws = weekStart(ref), we = addD(ws, 6); $('#c-title').textContent = `${short(ws)} – ${short(we)}`;
-    let kept = 0, tot = 0;
-    h = `<div class="wk">` + [0, 1, 2, 3, 4, 5, 6].map(i => { const s = addD(ws, i); const bl = blocksFor(s); const dn = bl.filter(b => isDone(s, b)).length; if (s <= td) { kept += dn; tot += bl.length; } const u = upo(s);
-      const vv = visitOf(s);
-      return `<div class="col ${s === td ? 'td' : ''}" data-day="${s}"><div class="hd">${DOW[dowOf(s)].slice(0, 3)}<b>${new Date(s + 'T00:00:00Z').getUTCDate()}</b>${u ? `<span class="moon">${MOON[u.kind]}</span>` : ''}</div><div class="vrow">${vv.ruwan ? `<span class="gold">${ICON.crown}</span>` : ''}${(vv.temples || []).length ? `<span class="blue" title="${esc(vv.temples.join(', '))}">${ICON.wheel}</span>` : ''}</div>${bl.map(b => { const d = isDone(s, b); return `<button class="blk" title="${esc(b.t + ' ' + b.name)}" aria-label="${esc(b.name)} ${d ? 'kept' : 'open'}" data-wk="${s}|${b.k}" style="--c:${GCOL[b.c]}" data-on="${d ? 1 : 0}"></button>`; }).join('')}</div>`; }).join('') + `</div>
-      <p class="pad mini">Solid is kept, outlined is open. Tap a block to tick it; tap a day's date to open it. This week so far: <b>${tot ? Math.round(kept / tot * 100) : 0}%</b> kept.</p>`;
+    const days = [0, 1, 2, 3, 4, 5, 6].map(i => addD(ws, i));
+    // One aligned row per practice across the whole week, so the same practice always sits on the same line.
+    const rows = new Map();
+    for (const s of days) for (const b of blocksFor(s)) if (!rows.has(b.k)) rows.set(b.k, b);
+    const list = [...rows.values()].sort((x, y) => mins(x.t) - mins(y.t));
+    let kept = 0, tot = 0; const per = days.map(s => { const bl = blocksFor(s); const dn = bl.filter(b => isDone(s, b)).length; if (s <= td) { kept += dn; tot += bl.length; } return [dn, bl.length]; });
+    const head = days.map(s => { const u = upo(s); return `<button class="wh ${s === td ? 'td' : ''}" data-day="${s}"><span>${DOW[dowOf(s)].slice(0, 2)}</span><b>${new Date(s + 'T00:00:00Z').getUTCDate()}</b><i class="moon">${u ? MOON[u.kind] : ''}</i></button>`; }).join('');
+    const vis = days.map(s => { const vv = visitOf(s); return `<span class="wv ${s === td ? 'td' : ''}">${vv.ruwan ? `<i class="gold">${ICON.crown}</i>` : ''}${(vv.temples || []).length ? `<i class="blue" title="${esc(vv.temples.join(', '))}">${ICON.wheel}</i>` : ''}</span>`; }).join('');
+    const anyVisit = days.some(s => { const vv = visitOf(s); return vv.ruwan || (vv.temples || []).length; });
+    const body = list.map(b => `<div class="wl" style="--c:${GCOL[b.c]}"><span class="wt">${esc(b.t)}</span><span class="wn">${esc(b.name)}</span></div>` + days.map(s => {
+      const on = blocksFor(s).some(x => x.k === b.k); if (!on) return `<span class="wc none ${s === td ? 'td' : ''}"></span>`;
+      const d = isDone(s, b); const fut = s > td;
+      return `<button class="wc ${s === td ? 'td' : ''} ${fut ? 'fut' : ''}" data-wk="${s}|${b.k}" style="--c:${GCOL[b.c]}" data-on="${d ? 1 : 0}" aria-label="${esc(b.name)}, ${nice(s)}: ${d ? 'kept' : 'open'}"><i></i></button>`;
+    }).join('')).join('');
+    const foot = days.map((s, i) => `<span class="wf ${s === td ? 'td' : ''}">${s <= td ? `${per[i][0]}<small>/${per[i][1]}</small>` : ''}</span>`).join('');
+    h = `<div class="wg"><span class="wl0"></span>${head}${anyVisit ? `<span class="wl0 lab">Temple</span>${vis}` : ''}${body}<span class="wl0 lab">Kept</span>${foot}</div>
+      <p class="pad mini">Each line is one practice, across the week. Filled is kept, ringed is open, a faint dot means it isn't scheduled that day. Tap to tick; tap a date to open the day. This week so far: <b>${tot ? Math.round(kept / tot * 100) : 0}%</b> kept.</p>`;
   } else if (m === 'month') {
     const d = new Date(ref + 'T00:00:00Z'); const y = d.getUTCFullYear(), mo = d.getUTCMonth(); $('#c-title').textContent = `${MON[mo]} ${y}`;
     const first = `${y}-${pad2(mo + 1)}-01`; const start = weekStart(first);
@@ -328,7 +366,7 @@ export function addSkill() {
 
 // ======================= SETTINGS =======================
 export function openSettings() {
-  const sy = S.sync; const st = { local: 'This device only', auth: 'Disconnected', syncing: 'Syncing…', ok: 'Synced', error: 'Sync error' }[sy.state] || sy.state;
+  const sy = S.sync; const st = { local: 'This device only', paused: 'Resting · resumes on your next tap', auth: 'Disconnected', syncing: 'Syncing…', ok: 'Synced', error: 'Sync error' }[sy.state] || sy.state;
   const tzs = ['Asia/Colombo', 'Europe/London', 'Asia/Dubai', 'Asia/Singapore', 'America/New_York'];
   const b = sheet('Settings', `
     <section class="set"><h3>Google</h3>
@@ -359,11 +397,11 @@ export function openSettings() {
   b.querySelector('#st-dl').onchange = e => saveSettings({ dictLang: e.target.value });
   b.querySelector('#st-imp').onchange = async e => { const f = e.target.files[0]; if (!f) return; try { const j = JSON.parse(await f.text()); restore(j); toast('Backup restored'); closeSheet(); render(); } catch (_) { toast('That file is not a backup from The Path'); } };
 }
-const google_ready = () => S.sync.state === 'ok' || S.sync.state === 'syncing' || S.sync.state === 'error';
+const google_ready = () => ['ok', 'syncing', 'error', 'paused'].includes(S.sync.state);
 export function applyTheme() { const t = S.settings.theme || 'system'; if (t === 'system') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t); }
 export async function settingsAct(act) {
   if (act === 'connect') { const ok = await connect(true); toast(ok ? 'Connected to Google' : (S.sync.msg || 'Could not connect')); closeSheet(); render(); }
-  if (act === 'sync') { await pull(); await loadCal(V.date); toast(S.sync.state === 'ok' ? 'Synced' : 'Sync: ' + S.sync.msg); closeSheet(); render(); }
+  if (act === 'sync') { await connect(true); toast(S.sync.state === 'ok' ? 'Synced' : 'Sync: ' + S.sync.msg); closeSheet(); render(); }
   if (act === 'signout') { disconnect(); toast('Signed out'); closeSheet(); render(); }
   if (act === 'import') { try { const n = await importSchedule(); toast(`Imported ${n} practices from your calendar`); closeSheet(); render(); } catch (e) { toast('Import failed: ' + e.message); } }
   if (act === 'editsched') editSchedule();

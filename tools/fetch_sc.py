@@ -1,31 +1,41 @@
 #!/usr/bin/env python3
 """Fetch Mahāsaṅgīti Pali, Sujato English and markup from SuttaCentral's bilara-data for the library.
-Usage: fetch_sc.py OUT_DIR"""
-import urllib.request, json, os, sys
+Usage: fetch_sc.py OUT_DIR [id ...]   (no ids: everything in the library catalogue)"""
+import urllib.request, urllib.error, json, os, sys
+sys.path.insert(0, os.path.dirname(__file__))
 B = "https://raw.githubusercontent.com/suttacentral/bilara-data/published/"
-IDS = """dn31 an4.53 an4.55 an2.33 an4.63 an5.39 an7.36 an7.63
-an8.54 an4.61 an4.62 an5.41 an5.177 an6.45 an4.258 an4.256 an5.227 an3.19 an3.20 an4.79 sn3.19 sn3.20 mn135 an7.6 snp2.14
-an5.35 an5.148 an7.52 mn142 an4.60
-kp5 snp1.6 an3.70 mn41
-dn26 dn5 dn16 dn27 an4.70 an5.133 sn3.17 sn3.13 sn3.25""".split()
 RANGES = {'an2.33': 'an2.32-41'}
-def path(i):
+def dirs(i):
     f = RANGES.get(i, i)
-    if i.startswith('dn'): d = 'dn'
-    elif i.startswith('mn'): d = 'mn'
-    elif i.startswith('an'): d = 'an/' + f.split('.')[0]
-    elif i.startswith('snp'): d = 'kn/snp/vagga' + f[3:].split('.')[0]
-    elif i.startswith('kp'): d = 'kn/kp'
-    elif i.startswith('sn'): d = 'sn/' + f.split('.')[0]
-    return d, f
+    if i.startswith('dn'): return ['dn'], f
+    if i.startswith('mn'): return ['mn'], f
+    if i.startswith('an'): return ['an/' + f.split('.')[0]], f
+    if i.startswith('snp'): return ['kn/snp/vagga' + f[3:].split('.')[0]], f
+    if i.startswith('sn'): return ['sn/' + f.split('.')[0]], f
+    if i.startswith('kp'): return ['kn/kp'], f
+    if i.startswith('ud'): return ['kn/ud/vagga' + f[2:].split('.')[0]], f
+    if i.startswith('iti'): return ['kn/iti/vagga%d' % v for v in range(1, 12)], f
+    raise ValueError(i)
 def get(u):
     with urllib.request.urlopen(u, timeout=60) as r: return json.load(r)
-out_dir = sys.argv[1] if len(sys.argv) > 1 else 'raw'
-os.makedirs(out_dir, exist_ok=True)
-for i in IDS:
-    d, f = path(i)
-    out = {'pli': get(B + f"root/pli/ms/sutta/{d}/{f}_root-pli-ms.json"),
-           'en': get(B + f"translation/en/sujato/sutta/{d}/{f}_translation-en-sujato.json"),
-           'html': get(B + f"html/pli/ms/sutta/{d}/{f}_html.json")}
-    json.dump(out, open(os.path.join(out_dir, i + '.json'), 'w'), ensure_ascii=False)
-    print(i, len(out['pli']), flush=True)
+def fetch(i):
+    ds, f = dirs(i)
+    for d in ds:
+        try: pli = get(B + f"root/pli/ms/sutta/{d}/{f}_root-pli-ms.json")
+        except urllib.error.HTTPError: continue
+        return {'pli': pli, 'en': get(B + f"translation/en/sujato/sutta/{d}/{f}_translation-en-sujato.json"),
+                'html': get(B + f"html/pli/ms/sutta/{d}/{f}_html.json")}
+    raise FileNotFoundError(i)
+if __name__ == '__main__':
+    out_dir = sys.argv[1] if len(sys.argv) > 1 else 'raw'
+    ids = sys.argv[2:]
+    if not ids:
+        from catalogue import all_sc_ids
+        ids = all_sc_ids()
+    os.makedirs(out_dir, exist_ok=True)
+    for i in ids:
+        src = 'dn16' if i == 'dn16x' else i
+        p = os.path.join(out_dir, src + '.json')
+        if os.path.exists(p): continue
+        out = fetch(src); json.dump(out, open(p, 'w'), ensure_ascii=False)
+        print(i, len(out['pli']), flush=True)

@@ -1,5 +1,5 @@
 // Offline support: the app shell is cached on install; library texts and fonts are cached as they are opened.
-const V = 'tp-2.1.0';
+const V = 'tp-2.2.0';
 const SHELL = ['./', 'index.html', 'css/app.css', 'config.js', 'js/app.js', 'js/core.js', 'js/data.js', 'js/store.js', 'js/ui.js', 'js/tools.js', 'js/views.js', 'js/library.js', 'library/index.json', 'img/hero.jpg', 'img/sky/night.jpg', 'img/sky/predawn.jpg', 'img/sky/dawn-mist.jpg', 'img/sky/morning.jpg', 'img/sky/day.jpg', 'img/sky/golden.jpg', 'img/sky/sunset.jpg', 'img/sky/dusk.jpg', 'img/sky/dome.jpg', 'icons/icon-192.png', 'icons/icon-512.png', 'manifest.webmanifest'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(V).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V && k !== 'tp-runtime').map(k => caches.delete(k)))).then(() => self.clients.claim())); });

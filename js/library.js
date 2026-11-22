@@ -7,7 +7,8 @@ let IDX = null; const TXT = {};
 const loadIdx = async () => IDX || (IDX = await (await fetch('library/index.json')).json());
 export const libraryIndex = loadIdx;
 const loadTxt = async id => TXT[id] || (TXT[id] = await (await fetch(`library/t/${id}.json`)).json());
-const MODES = [['en', 'English'], ['par', 'English + Pali'], ['pli', 'Pali'], ['bjtp', 'BJT පාළි'], ['bjts', 'BJT සිංහල'], ['apz', 'නූතන සිංහල']];
+const MODES = [['en', 'English'], ['par', 'English + Pali'], ['pli', 'Pali'], ['bjtp', 'BJT පාළි'], ['bjts', 'BJT සිංහල'], ['apz', 'නූතන සිංහල'], ['attp', 'අටුවා පාළි'], ['atts', 'අටුවා සිංහල']];
+const modesFor = (id, s) => MODES.filter(([k]) => s.bjtOnly ? ['bjtp', 'bjts'].includes(k) : !(id === 'ja534' && k === 'pli') && (s.atta || !k.startsWith('att')));
 const R = { mode: localStorage.getItem('tp.mode') || 'en', tab: 'study', size: +(localStorage.getItem('tp.size') || 1) };
 const ICON = {
   back: '<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
@@ -26,11 +27,12 @@ export async function renderLibrary(route) {
 
 // ---------------- home ----------------
 function home(el) {
+  const openParts = new Set(JSON.parse(localStorage.getItem('tp.parts') || '["household","wealth"]'));
   const bm = S.settings.bookmarks || []; const last = JSON.parse(localStorage.getItem('tp.last') || 'null');
   const E = IDX.essays;
   el.innerHTML = `
-  <header class="lib-hero"><h1>Library</h1><p class="si">ගිහි විනය · The Buddha's teaching for householders and rulers</p></header>
-  <div class="pad"><input type="search" id="l-q" class="search" placeholder="Search the library: debt, taxes, marriage, kings…"></div>
+  <header class="lib-hero"><h1>Library</h1><p class="si">ගිහි විනය · The Buddha's teaching for lay life, and the way of meditation</p></header>
+  <div class="pad"><input type="search" id="l-q" class="search" placeholder="Search: debt, marriage, grief, kasiṇa, kings…"></div>
   <div id="l-res"></div>
   <div id="l-main">
     ${last && IDX.suttas[last.id] ? `<a class="continue" href="#library/${last.id}"><small>Continue reading</small><b>${esc(IDX.suttas[last.id].title)}</b><span>${esc(IDX.suttas[last.id].ref)}</span></a>` : ''}
@@ -40,12 +42,15 @@ function home(el) {
     <div class="pad chips guide">${IDX.guide.map((g, i) => `<button class="chip" data-guide="${i}">${esc(g[0])}</button>`).join('')}</div>
     <div id="l-guide"></div>
     ${bm.length ? `<div class="sec"><h2>Bookmarks</h2><span>${bm.length}</span></div><div class="slist pad">${bm.filter(id => IDX.suttas[id]).map(id => item(id)).join('')}</div>` : ''}
-    ${IDX.parts.map(p => `<div class="sec part"><h2>${esc(p.title)}</h2><span class="si">${esc(p.si)}</span></div><p class="pad mini">${esc(p.intro)}</p><div class="slist pad">${p.items.map(item).join('')}</div>`).join('')}
+    <div class="pad chips jump">${(IDX.groups || []).map(([g, ids]) => ids.map(pid => { const p = IDX.parts.find(x => x.id === pid); return p ? `<a class="chip" href="#library" data-jump="${p.id}">${esc(p.title.replace(/^Meditation: /, ''))}</a>` : ''; }).join('')).join('')}</div>
+    ${(IDX.groups || [['', IDX.parts.map(p => p.id)]]).map(([g, ids]) => `${g ? `<div class="grp"><h2>${esc(g)}</h2><span>${ids.reduce((n, pid) => n + ((IDX.parts.find(x => x.id === pid) || {}).items || []).length, 0)} texts</span></div>` : ''}${ids.map(pid => IDX.parts.find(x => x.id === pid)).filter(Boolean).map(p => `<details class="part" id="part-${p.id}" ${openParts.has(p.id) ? 'open' : ''}><summary><span class="pt"><b>${esc(p.title.replace(/^Meditation: /, ''))}</b><small>${esc(p.intro)}</small></span><span class="pc">${p.items.length}<i>›</i></span></summary><p class="si mini">${esc(p.si)}</p><div class="slist">${p.items.map(id => item(id)).join('')}</div></details>`).join('')}`).join('')}
     <div class="sec"><h2>About</h2></div><div class="slist pad"><a class="litem" href="#library/essay/about"><span class="ref">Texts</span><span class="n"><b>${esc(E.about.title)}</b><small>${esc(E.about.sub)}</small></span></a></div>
-    <p class="pad mini legal">Pali and Sinhala: Buddha Jayanti Tipiṭaka and pitaka.lk modern Sinhala, from tipitaka.lk under CC BY-ND 4.0, reproduced unaltered. English: Bhikkhu Sujato, SuttaCentral, public domain. Study notes by Claude.</p>
+    <p class="pad mini legal">Pali and Sinhala, including the aṭṭhakathā and the Visuddhimagga: Buddha Jayanti Tipiṭaka and pitaka.lk modern Sinhala, from tipitaka.lk under CC BY-ND 4.0, reproduced unaltered. English: Bhikkhu Sujato, SuttaCentral, public domain. Study notes by Claude.</p>
   </div>`;
   window.scrollTo(0, 0);
   el.querySelector('#l-q').oninput = e => search(e.target.value);
+  el.querySelectorAll('details.part').forEach(d => d.addEventListener('toggle', () => { const o = new Set(JSON.parse(localStorage.getItem('tp.parts') || '[]')); d.open ? o.add(d.id.slice(5)) : o.delete(d.id.slice(5)); localStorage.setItem('tp.parts', JSON.stringify([...o])); }));
+  el.querySelectorAll('[data-jump]').forEach(a => a.onclick = e => { e.preventDefault(); const d = el.querySelector('#part-' + a.dataset.jump); if (d) { d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'start' }); } });
   el.querySelectorAll('[data-guide]').forEach(c => c.onclick = () => { const g = IDX.guide[+c.dataset.guide]; el.querySelectorAll('[data-guide]').forEach(x => x.classList.toggle('on', x === c)); el.querySelector('#l-guide').innerHTML = `<div class="slist pad">${g[1].map(([id, why]) => item(id, why)).join('')}</div>`; });
 }
 const item = (id, why) => { const s = IDX.suttas[id]; return `<a class="litem" href="#library/${id}"><span class="ref">${esc(s.ref)}</span><span class="n"><b>${esc(s.title)}</b><small>${esc(why || s.known)}</small></span></a>`; };
@@ -98,7 +103,8 @@ async function body(id, focusSeg) {
     el.querySelectorAll('.tn-term').forEach(b => b.onclick = () => { R.tab = 'text'; if (!['en', 'par'].includes(R.mode)) R.mode = 'par'; $$('#lr-tabs [data-tab]').forEach(x => x.classList.toggle('on', x.dataset.tab === 'text')); body(id, b.dataset.seg); });
     return;
   }
-  el.innerHTML = `<div class="modes" id="lr-modes">${MODES.filter(m => !(id === 'ja534' && m[0] === 'pli')).map(([k, l]) => `<button class="chip ${R.mode === k ? 'on' : ''}" data-mode="${k}">${l}</button>`).join('')}</div><div id="lr-text" class="loading">Opening the text…</div>`;
+  const ms = modesFor(id, s); if (!ms.some(([k]) => k === R.mode)) R.mode = ms[0][0];
+  el.innerHTML = `<div class="modes" id="lr-modes">${ms.map(([k, l]) => `<button class="chip ${R.mode === k ? 'on' : ''}" data-mode="${k}">${l}</button>`).join('')}</div><div id="lr-text" class="loading">Opening the text…</div>`;
   el.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { R.mode = b.dataset.mode; localStorage.setItem('tp.mode', R.mode); el.querySelectorAll('[data-mode]').forEach(x => x.classList.toggle('on', x === b)); text(id); });
   await text(id, focusSeg);
 }
@@ -124,7 +130,8 @@ async function text(id, focusSeg) {
     }).join('') + `</div><p class="credit">${m === 'pli' ? (id === 'ja534' ? 'Pali: Buddha Jayanti Tipiṭaka, tipitaka.lk (CC BY-ND 4.0), unaltered.' : 'Pali: Mahāsaṅgīti Tipiṭaka, via SuttaCentral (public domain).') : id === 'ja534' ? 'English: Claude, checked against the Buddha Jayanti Sinhala. Pali: Buddha Jayanti Tipiṭaka, tipitaka.lk (CC BY-ND 4.0).' : 'English: Bhikkhu Sujato, SuttaCentral (public domain). ✻ marks a translation note; tap it.'}</p>`;
     box.querySelectorAll('.noted').forEach(x => x.onclick = () => { const n = noted[x.dataset.note]; sheet(n.term, `<div class="prose"><p class="pali big">${esc(n.term)}</p>${md(n.text)}</div>`); });
   } else {
-    const src = m === 'bjtp' ? t.bjt.pali : m === 'bjts' ? t.bjt.si : t.bjt.apz;
+    const at = m === 'attp' || m === 'atts'; const A = at ? (t.atta || { pali: [], si: [], fn_pali: [], fn_si: [] }) : null;
+    const src = at ? (m === 'attp' ? A.pali : A.si) : m === 'bjtp' ? t.bjt.pali : m === 'bjts' ? t.bjt.si : t.bjt.apz;
     const rows = src.map((e, i) => {
       if (!e) return ''; const ty = m === 'apz' ? (t.bjt.pali[i]?.[0] || 'paragraph') : e[0]; const tx = m === 'apz' ? e : e[1];
       if (!tx || !String(tx).trim()) return '';
@@ -132,8 +139,8 @@ async function text(id, focusSeg) {
       if (String(ty).startsWith('gatha')) return `<div class="vs">${bjtHtml(tx)}</div>`;
       return `<p>${bjtHtml(tx)}</p>`;
     }).join('');
-    const fn = m === 'bjtp' ? t.bjt.fn_pali : m === 'bjts' ? t.bjt.fn_si : [];
-    box.innerHTML = `<div class="text sinhala">${rows}</div>${fn.length ? `<details class="fns"><summary>Footnotes · variant readings</summary>${fn.map(f => `<p>${bjtHtml(f)}</p>`).join('')}</details>` : ''}<p class="credit">${m === 'apz' ? 'Modern Sinhala translation derived from A. P. de Zoysa, pitaka.lk' : 'Buddha Jayanti Tipiṭaka'} · tipitaka.lk · CC BY-ND 4.0 · reproduced unaltered.${id === 'dn16x' ? ' Two excerpts.' : ''}</p>`;
+    const fn = at ? (m === 'attp' ? A.fn_pali : A.fn_si) : m === 'bjtp' ? t.bjt.fn_pali : m === 'bjts' ? t.bjt.fn_si : [];
+    box.innerHTML = `<div class="text sinhala">${rows}</div>${fn.length ? `<details class="fns"><summary>Footnotes · variant readings</summary>${fn.map(f => `<p>${bjtHtml(f)}</p>`).join('')}</details>` : ''}${at ? `<p class="mini atta-note">${m === 'attp' ? 'The aṭṭhakathā: the classical commentary preserved at the Mahāvihāra and set down in Pali by Buddhaghosa and his successors.' : 'The aṭṭhakathā in Sinhala.'}</p>` : ''}<p class="credit">${m === 'apz' ? 'Modern Sinhala translation derived from A. P. de Zoysa, pitaka.lk' : at ? 'Aṭṭhakathā' : s.bjtOnly ? 'Visuddhimagga' : 'Buddha Jayanti Tipiṭaka'} · tipitaka.lk · CC BY-ND 4.0 · reproduced unaltered.${id === 'dn16x' ? ' Two excerpts.' : ''}</p>`;
   }
   if (focusSeg) { const t2 = document.getElementById('s-' + focusSeg); if (t2) { t2.scrollIntoView({ block: 'center' }); t2.classList.add('flash'); setTimeout(() => t2.classList.remove('flash'), 2200); } }
 }

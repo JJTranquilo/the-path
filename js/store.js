@@ -19,6 +19,7 @@ export const blocksFor = date => { const dw = new Date(date + 'T00:00:00Z').getU
 export const blockByKey = k => schedule().find(b => b.k === k);
 
 // ---------- load ----------
+let calQ = [];
 export async function load() {
   const [days, notes, meta] = await Promise.all([idb.all('days'), idb.all('notes'), idb.all('meta')]);
   for (const [k, v] of days) S.days[k] = v;
@@ -28,7 +29,7 @@ export async function load() {
   if (m.cards) { S.cards = m.cards.list || []; S.cardsU = m.cards.u || 0; }
   if (m.reflections) S.reflections = m.reflections;
   if (m.upoCal) S.upoCal = m.upoCal;
-  dirty = new Set(m.dirty || []); driveIds = m.driveIds || {};
+  dirty = new Set(m.dirty || []); driveIds = m.driveIds || {}; calQ = m.calq || [];
   setTZ(S.settings.tz || CONFIG.tz);
   migrateVisits();
 }
@@ -56,6 +57,8 @@ export function toggleRuwan(d) { editDay(d, x => { x.visit = { ...(x.visit || {}
 export function setTemples(d, list) { editDay(d, x => { x.visit = { ...(x.visit || {}) }; x.visit.temples = list; }); }
 export function ruwanStreak(d) { // consecutive days ending at d (or the day before, if d not yet visited)
   let s = d; if (!visitOf(s).ruwan) s = addD(s, -1); let n = 0; while (visitOf(s).ruwan) { n++; s = addD(s, -1); } return n; }
+// Days since the most recent visit before or on d (null if none recorded).
+export function daysSince(d, fn) { const k = Object.keys(S.days).filter(x => x <= d && fn(visitOf(x))).sort().pop(); return k ? Math.round((Date.parse(d) - Date.parse(k)) / 864e5) : null; }
 export const visitCount = (from, to, fn) => Object.keys(S.days).filter(k => k >= from && k <= to && fn(visitOf(k))).length;
 export function recentTemples() { const seen = new Map(); for (const [k, v] of Object.entries(S.days).sort((a, b) => b[0].localeCompare(a[0]))) for (const t of (v.visit?.temples || [])) if (!seen.has(t)) seen.set(t, k); return [...seen.keys()].slice(0, 8); }
 // Notes titled "Visited <temple> …" become visits, once.
@@ -175,17 +178,34 @@ export async function pull() {
 export async function connect(interactive) {
   const cid = clientId(); if (!cid) { setSync('local', 'Add your Google client ID in Settings to sync.'); return false; }
   try {
-    await google.init(cid);
-    if (!google.hasToken()) { if (!interactive) { setSync('auth', 'Tap to connect Google'); return false; } await google.signIn(S.settings.consented ? '' : 'consent'); if (!S.settings.consented) saveSettings({ consented: 1 }); }
-    await pull(); loadCal(zNow().date); return true;
-  } catch (e) { setSync(e.code === 'auth' || e.code === 'popup_closed' ? 'auth' : 'error', e.message); return false; }
+    if (!google.ready()) await google.init(cid);
+    if (!google.hasToken()) {
+      // Google's browser tokens last an hour. Once consent has been given, we renew quietly on the next tap
+      // instead of asking the person to reconnect; everything is kept on the device meanwhile.
+      if (!interactive) { setSync(S.settings.consented ? 'paused' : 'auth', S.settings.consented ? 'Sync resumes with your next tap' : 'Tap to connect Google'); return false; }
+      await google.signIn(S.settings.consented ? '' : 'consent'); if (!S.settings.consented) saveSettings({ consented: 1 });
+    }
+    await afterAuth(); return true;
+  } catch (e) { setSync(e.code === 'auth' || e.code === 'popup_closed' || e.code === 'popup_failed_to_open' ? 'auth' : 'error', e.message); return false; }
+}
+async function afterAuth() {
+  if (!localStorage.getItem('tp.hint')) google.rememberAccount();
+  await pull(); await loadCal(zNow().date); await replayCal();
+}
+// Called from a global tap handler. Renews the hour-long token inside the gesture, before it lapses.
+let lastTry = 0;
+export function resume() {
+  if (!S.settings.consented || !clientId() || !google.ready() || !navigator.onLine) return;
+  if (!google.expiresSoon() || Date.now() - lastTry < 90000) return;
+  lastTry = Date.now();
+  google.signIn('').then(afterAuth).catch(e => { if (!google.hasToken()) setSync('auth', e.message); });
 }
 export function disconnect() { google.signOut(); S.calState = 'off'; setSync('local', 'Signed out'); }
 
 // ---------- Calendar ----------
 const norm = t => displayName(String(t || '').replace(/^✓\s*/, '')).toLowerCase();
 export async function loadCal(d) {
-  if (!google.hasToken() || !calId()) { S.calState = 'off'; return; }
+  if (!google.hasToken() || !calId()) { if (S.calState !== 'err') S.calState = 'off'; return; }
   try {
     const evs = await calendar.list(calId(), d, 1, getTZ()); const map = {}; const bl = blocksFor(d);
     for (const ev of evs) {
@@ -195,13 +215,21 @@ export async function loadCal(d) {
       if (b) map[b.k] = { id: ev.id, done: ev.colorId === '8' || /^✓/.test(ev.summary || '') };
     }
     S.cal[d] = map; S.calState = 'on'; S.calMsg = ''; emit('cal');
-  } catch (e) { S.calState = 'err'; S.calMsg = e.code === 'auth' ? 'Calendar needs you to reconnect.' : 'Calendar unreachable: ' + e.message; emit('cal'); }
+  } catch (e) { if (e.code === 'auth') { S.calState = 'off'; return; } S.calState = 'err'; S.calMsg = 'Calendar unreachable: ' + e.message; emit('cal'); }
+}
+// Calendar ticks made while offline or between tokens wait here and are replayed after the next sign-in.
+function queueCal(d, k, done) { calQ = calQ.filter(x => !(x.d === d && x.k === k)); calQ.push({ d, k, done }); idb.put('meta', 'calq', calQ); }
+async function replayCal() {
+  if (!calQ.length || !google.hasToken()) return;
+  const q = calQ; calQ = []; idb.put('meta', 'calq', calQ);
+  for (const x of q) { const b = blocksFor(x.d).find(y => y.k === x.k); if (b) await pushCal(x.d, b, x.done); }
 }
 async function pushCal(d, b, done) {
-  if (!google.hasToken() || !calId()) return;
+  if (!calId()) return;
+  if (!google.hasToken()) { queueCal(d, b.k, done); return; }
   let ce = (S.cal[d] || {})[b.k]; if (!ce) { await loadCal(d); ce = (S.cal[d] || {})[b.k]; } if (!ce) return;
   try { await calendar.patch(calId(), ce.id, { colorId: done ? '8' : b.c, summary: done ? '✓ ' + b.title : b.title }); ce.done = done; }
-  catch (e) { S.calState = 'err'; S.calMsg = 'Could not update Calendar: ' + e.message; emit('cal'); }
+  catch (e) { queueCal(d, b.k, done); if (e.code !== 'auth') { S.calState = 'err'; S.calMsg = 'Calendar could not be updated just now. Your tick is saved and will be sent again.'; emit('cal'); } }
 }
 // Build a schedule from a week of the user's Path calendar.
 export async function importSchedule() {

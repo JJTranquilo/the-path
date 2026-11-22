@@ -99,6 +99,8 @@ function loadGIS() {
 }
 export const google = {
   hasToken: () => !!token && expiry > Date.now() + 30000,
+  expiresSoon: () => !token || expiry - Date.now() < 10 * 60000,
+  ready: () => !!tokenClient,
   async init(clientId) {
     if (!clientId) throw Object.assign(new Error('No client ID'), { code: 'noclient' });
     await loadGIS();
@@ -108,8 +110,10 @@ export const google = {
       error_callback: e => { pending?.rej(Object.assign(new Error(e.type || 'popup'), { code: e.type || 'popup' })); pending = null; },
     });
   },
-  signIn(prompt = '') { return new Promise((res, rej) => { if (!tokenClient) return rej(Object.assign(new Error('not ready'), { code: 'noclient' })); pending = { res, rej }; tokenClient.requestAccessToken({ prompt }); }); },
-  signOut() { if (token && window.google?.accounts?.oauth2) window.google.accounts.oauth2.revoke(token, () => {}); token = null; expiry = 0; localStorage.removeItem('tp.tok'); },
+  // Must be called synchronously inside a tap: browsers only allow the Google window from a user gesture.
+  signIn(prompt = '') { return new Promise((res, rej) => { if (!tokenClient) return rej(Object.assign(new Error('not ready'), { code: 'noclient' })); pending = { res, rej }; const hint = localStorage.getItem('tp.hint'); tokenClient.requestAccessToken(hint ? { prompt, login_hint: hint, hint } : { prompt }); }); },
+  async rememberAccount() { try { const r = await google.fetch('https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)'); const j = await r.json(); if (j.user?.emailAddress) localStorage.setItem('tp.hint', j.user.emailAddress); } catch (_) {} },
+  signOut() { if (token && window.google?.accounts?.oauth2) window.google.accounts.oauth2.revoke(token, () => {}); token = null; expiry = 0; localStorage.removeItem('tp.tok'); localStorage.removeItem('tp.hint'); },
   async fetch(url, opts = {}) {
     if (!google.hasToken()) throw Object.assign(new Error('auth'), { code: 'auth' });
     const r = await fetch(url, { ...opts, headers: { ...(opts.headers || {}), Authorization: 'Bearer ' + token } });

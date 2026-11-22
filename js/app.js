@@ -1,6 +1,6 @@
 // Boot, routing and global events.
 import { $, $$, zNow, addD } from './core.js';
-import { S, load, onChange, connect, loadCal, flush, clientId } from './store.js';
+import { S, load, onChange, connect, loadCal, flush, clientId, resume } from './store.js';
 import { V, render, renderToday, renderCal, renderPotha, renderRubric, todayClick, calClick, pothaClick, openNote, onFiles, findCard, openCard, addSkill, openSettings, settingsAct, applyTheme } from './views.js';
 import { newNote, saveCards } from './store.js';
 import { renderLibrary } from './library.js';
@@ -36,6 +36,7 @@ async function boot() {
 }
 
 document.addEventListener('click', e => {
+  if (!e.target.closest('[data-act]')) resume();
   const t = e.target;
   const act = t.closest('[data-act]'); if (act) { settingsAct(act.dataset.act); return; }
   if (t.closest('#v-today') && todayClick(e)) return;
